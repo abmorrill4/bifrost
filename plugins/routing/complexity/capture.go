@@ -576,3 +576,32 @@ func captureUnix(value any) int64 {
 	}
 	return 0
 }
+
+// CountCaptured counts the requests captured from from through to, reading
+// only their timestamps, so a run can be sized before it reads any vector.
+func CountCaptured(ctx context.Context, store vectorstore.VectorStore, namespace string, from, to time.Time) (int, error) {
+	if store == nil || namespace == "" {
+		return 0, nil
+	}
+	queries := []vectorstore.Query{
+		{Field: captureMetadataKind, Operator: vectorstore.QueryOperatorEqual, Value: captureMetadataKindValue},
+		{Field: captureMetadataTimestamp, Operator: vectorstore.QueryOperatorGreaterThanOrEqual, Value: from.Unix()},
+		{Field: captureMetadataTimestamp, Operator: vectorstore.QueryOperatorLessThanOrEqual, Value: to.Unix()},
+	}
+	var count int
+	var cursor *string
+	for {
+		results, next, err := store.GetAll(ctx, namespace, queries, []string{captureMetadataTimestamp}, cursor, captureReadPage)
+		if errors.Is(err, vectorstore.ErrNotFound) {
+			return count, nil
+		}
+		if err != nil {
+			return count, fmt.Errorf("count captured requests: %w", err)
+		}
+		count += len(results)
+		if next == nil || *next == "" || len(results) == 0 {
+			return count, nil
+		}
+		cursor = next
+	}
+}
