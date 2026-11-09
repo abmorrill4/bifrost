@@ -211,6 +211,13 @@ derive_pg_env_from_database_url() {
 
 derive_pg_env_from_database_url
 
+# Platforms that pick the listening port (Heroku, Render, Cloud Run, Koyeb,
+# DigitalOcean App Platform) announce it as PORT. When PORT is set it wins over
+# APP_PORT, so the image needs no per-platform port configuration.
+if [ -n "$PORT" ]; then
+    export APP_PORT="$PORT"
+fi
+
 # Parse command line arguments and set environment variables
 parse_args() {
     while [ $# -gt 0 ]; do
