@@ -199,6 +199,10 @@ func ToOpenAIChatRequest(ctx *schemas.BifrostContext, bifrostReq *schemas.Bifros
 		openaiReq.filterOpenAISpecificParameters(caps)
 		openaiReq.applyBytePlusCompatibility()
 		return openaiReq
+	case schemas.Baseten:
+		openaiReq.filterOpenAISpecificParameters(caps)
+		openaiReq.applyBasetenCompatibility()
+		return openaiReq
 	case schemas.OpencodeGo, schemas.OpencodeZen:
 		openaiReq.filterOpenAISpecificParameters(caps)
 		// OpenCode's chat-completions endpoints still use the legacy max_tokens
@@ -448,6 +452,17 @@ func (req *OpenAIChatRequest) applyBytePlusCompatibility() {
 	maps.Copy(extraParams, req.ExtraParams)
 	extraParams["thinking"] = map[string]interface{}{"type": "disabled"}
 	req.ExtraParams = extraParams
+}
+
+// applyBasetenCompatibility fits the request to Baseten's chat schema, which sets
+// additionalProperties:false: max_completion_tokens is not defined there (only
+// max_tokens is) and service_tier is unknown, so both would be rejected.
+func (req *OpenAIChatRequest) applyBasetenCompatibility() {
+	if req.MaxCompletionTokens != nil {
+		req.MaxTokens = req.MaxCompletionTokens
+		req.MaxCompletionTokens = nil
+	}
+	req.ServiceTier = nil
 }
 
 // stripReasoningDetailsExceptToolCalls strips reasoning_content from assistant messages that
