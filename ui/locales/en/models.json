@@ -2159,7 +2159,7 @@
 	},
 	"budgetUsageReset": {
 		"title": "Reset budget usage?",
-		"description": "You changed a budget amount or reset frequency on this {{owner}}. Reset current usage to 0, or preserve the existing counters. The reset window keeps its current start and end either way."
+		"description": "You changed the budgets on this {{owner}}. Reset Usage sets current usage to 0 on every budget you changed or added. Preserve Usage keeps the existing counters, and a newly added budget starts with what was already spent in its window. The reset window keeps its current start and end either way."
 	},
 	"decisionModel": {
 		"searchDecisionModels": "Search decision models…",
