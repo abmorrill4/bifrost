@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"reflect"
 	"regexp"
 	"slices"
 	"sort"
@@ -1846,6 +1847,12 @@ type RequestBodyGetter interface {
 	GetRawRequestBody() []byte
 }
 
+// isNilPointer reports whether v holds a nil pointer behind a non-nil interface.
+func isNilPointer(v interface{}) bool {
+	rv := reflect.ValueOf(v)
+	return rv.Kind() == reflect.Pointer && rv.IsNil()
+}
+
 // CheckAndGetRawRequestBody checks if the raw request body should be used, and returns it if it exists.
 func CheckAndGetRawRequestBody(ctx context.Context, request RequestBodyGetter) ([]byte, bool) {
 	if rawBody, ok := ctx.Value(schemas.BifrostContextKeyUseRawRequestBody).(bool); ok && rawBody {
@@ -2639,7 +2646,8 @@ func CheckContextAndGetRequestBody(ctx context.Context, request RequestBodyGette
 		if ct != nil {
 			ct.EndSpan(chdl, schemas.SpanStatusOk, "")
 		}
-		if convertedBody == nil {
+		// Converters return typed pointers, so a nil result arrives as a non-nil interface.
+		if convertedBody == nil || isNilPointer(convertedBody) {
 			return nil, NewBifrostOperationError("request body is not provided", nil)
 		}
 
