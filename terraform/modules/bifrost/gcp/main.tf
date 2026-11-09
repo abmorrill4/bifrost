@@ -180,6 +180,16 @@ module "gke" {
   autoscaling_cpu_threshold    = var.autoscaling_cpu_threshold
   autoscaling_memory_threshold = var.autoscaling_memory_threshold
   domain_name                  = var.domain_name
+
+  # Managed database, generated secrets and exposure
+  extra_environment        = local.managed_environment_map
+  extra_secret_environment = local.managed_secret_map
+  service_type             = var.service_type
+
+  depends_on = [
+    google_sql_database.bifrost,
+    google_sql_user.bifrost,
+  ]
 }
 
 module "cloud_run" {
@@ -243,18 +253,30 @@ module "cloud_run" {
 
 locals {
   is_cloud_run     = var.service == "cloud-run"
-  manage_database  = local.is_cloud_run && var.create_database
-  generate_secrets = local.is_cloud_run && var.generate_secrets
+  is_gke           = var.service == "gke"
+  manage_database  = (local.is_cloud_run || local.is_gke) && var.create_database
+  generate_secrets = (local.is_cloud_run || local.is_gke) && var.generate_secrets
 
   database_tier = coalesce(var.database_instance_class, "db-custom-1-3840")
 
+  # Cloud Run reaches the instance over the connector socket; GKE over the
+  # instance's private IP inside the VPC (TLS on).
   managed_environment = local.manage_database ? [
-    { name = "PG_HOST", value = "/cloudsql/${google_sql_database_instance.bifrost[0].connection_name}" },
+    { name = "PG_HOST", value = local.is_gke ? google_sql_database_instance.bifrost[0].private_ip_address : "/cloudsql/${google_sql_database_instance.bifrost[0].connection_name}" },
     { name = "PG_PORT", value = "5432" },
     { name = "PG_USER", value = var.database_user },
     { name = "PG_DATABASE", value = var.database_name },
-    { name = "PG_SSL_MODE", value = "disable" },
+    { name = "PG_SSL_MODE", value = local.is_gke ? "require" : "disable" },
   ] : []
+
+  managed_environment_map = { for e in local.managed_environment : e.name => e.value }
+  managed_secret_map = local.is_gke ? merge(
+    local.manage_database ? { PG_PASSWORD = random_password.database[0].result } : {},
+    local.generate_secrets ? {
+      BIFROST_ENCRYPTION_KEY = random_password.encryption_key[0].result
+      BIFROST_SETUP_TOKEN    = random_password.setup_token[0].result
+    } : {},
+  ) : {}
 
   managed_secret_environment = concat(
     local.manage_database ? [
@@ -306,6 +328,8 @@ resource "google_sql_database_instance" "bifrost" {
 
   deletion_protection = var.database_deletion_protection
 
+  depends_on = [google_service_networking_connection.private_services]
+
   settings {
     tier              = local.database_tier
     availability_type = "ZONAL"
@@ -313,10 +337,12 @@ resource "google_sql_database_instance" "bifrost" {
     disk_size         = var.database_storage_gb
     disk_autoresize   = true
 
-    # Public IP with no authorized networks: only connector traffic
-    # (Cloud Run's /cloudsql mount) and IAM-authorized tooling can reach it.
+    # Cloud Run: public IP with no authorized networks, so only connector
+    # traffic (the /cloudsql mount) and IAM-authorized tooling can reach it.
+    # GKE: private IP on the cluster VPC through service networking peering.
     ip_configuration {
-      ipv4_enabled = true
+      ipv4_enabled    = !local.is_gke
+      private_network = local.is_gke ? local.vpc_id : null
     }
 
     backup_configuration {
@@ -326,6 +352,27 @@ resource "google_sql_database_instance" "bifrost" {
 
     user_labels = var.tags
   }
+}
+
+# Private services access for GKE: a reserved range on the VPC peered to the
+# Cloud SQL producer network. The instance must wait for the connection.
+resource "google_compute_global_address" "private_services" {
+  count = local.manage_database && local.is_gke ? 1 : 0
+
+  name          = "${var.name_prefix}-private-services"
+  project       = var.project_id
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = local.vpc_id
+}
+
+resource "google_service_networking_connection" "private_services" {
+  count = local.manage_database && local.is_gke ? 1 : 0
+
+  network                 = local.vpc_id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_services[0].name]
 }
 
 resource "google_sql_database" "bifrost" {

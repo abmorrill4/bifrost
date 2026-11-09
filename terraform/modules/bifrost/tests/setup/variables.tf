@@ -116,3 +116,4 @@ variable "database_storage_gb" { default = 20 }
 variable "database_deletion_protection" { default = false }
 variable "database_skip_final_snapshot" { default = true }
 variable "generate_secrets" { default = false }
+variable "service_type" { default = "ClusterIP" }

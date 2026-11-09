@@ -24,3 +24,8 @@ output "database_endpoint" {
   description = "Cloud SQL connection name (Cloud Run with create_database)."
   value       = local.manage_database ? google_sql_database_instance.bifrost[0].connection_name : null
 }
+
+output "external_url" {
+  description = "Public URL of the GKE LoadBalancer Service when service_type is LoadBalancer."
+  value       = try(module.gke[0].external_url, null)
+}

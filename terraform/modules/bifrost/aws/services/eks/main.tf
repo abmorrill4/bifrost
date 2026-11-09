@@ -211,6 +211,21 @@ resource "kubernetes_secret" "bifrost_config" {
   depends_on = [kubernetes_namespace.bifrost]
 }
 
+# Runtime secrets injected as environment variables (database password,
+# encryption key, setup token) when the platform module manages them.
+resource "kubernetes_secret" "bifrost_runtime" {
+  count = length(var.extra_secret_environment) > 0 ? 1 : 0
+
+  metadata {
+    name      = "bifrost-runtime"
+    namespace = kubernetes_namespace.bifrost.metadata[0].name
+    labels    = local.common_labels
+  }
+
+  data = var.extra_secret_environment
+  type = "Opaque"
+}
+
 # =============================================================================
 # EBS Volume + Persistent Volume + PVC — SQLite persistence
 # =============================================================================
@@ -349,6 +364,30 @@ resource "kubernetes_deployment" "bifrost" {
           name  = "bifrost"
           image = var.image
 
+          # Managed database and generated secrets (plain values and
+          # Secret-backed values), see the platform module.
+          dynamic "env" {
+            for_each = var.extra_environment
+            content {
+              name  = env.key
+              value = env.value
+            }
+          }
+
+          # The map is sensitive, so iterate over its key names only.
+          dynamic "env" {
+            for_each = toset(nonsensitive(keys(var.extra_secret_environment)))
+            content {
+              name = env.value
+              value_from {
+                secret_key_ref {
+                  name = kubernetes_secret.bifrost_runtime[0].metadata[0].name
+                  key  = env.value
+                }
+              }
+            }
+          }
+
           port {
             container_port = var.container_port
             name           = "http"
@@ -460,7 +499,7 @@ resource "kubernetes_service" "bifrost" {
       protocol    = "TCP"
     }
 
-    type = "ClusterIP"
+    type = var.service_type
   }
 
   depends_on = [kubernetes_deployment.bifrost]

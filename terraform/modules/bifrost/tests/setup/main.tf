@@ -122,4 +122,5 @@ module "bifrost" {
   database_deletion_protection = var.database_deletion_protection
   database_skip_final_snapshot = var.database_skip_final_snapshot
   generate_secrets             = var.generate_secrets
+  service_type                 = var.service_type
 }

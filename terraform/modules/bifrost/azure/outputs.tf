@@ -24,3 +24,8 @@ output "database_endpoint" {
   description = "Flexible Server FQDN (ACI with create_database)."
   value       = local.manage_database ? azurerm_postgresql_flexible_server.bifrost[0].fqdn : null
 }
+
+output "external_url" {
+  description = "Public URL of the AKS LoadBalancer Service when service_type is LoadBalancer."
+  value       = try(module.aks[0].external_url, null)
+}

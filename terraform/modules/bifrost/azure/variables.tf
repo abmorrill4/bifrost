@@ -208,3 +208,9 @@ variable "key_vault_network_default_action" {
     error_message = "key_vault_network_default_action must be Allow or Deny"
   }
 }
+
+variable "service_type" {
+  description = "Kubernetes Service type for AKS (ClusterIP, LoadBalancer, NodePort)."
+  type        = string
+  default     = "ClusterIP"
+}

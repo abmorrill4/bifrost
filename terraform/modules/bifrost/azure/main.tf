@@ -209,6 +209,16 @@ module "aks" {
   node_machine_type            = var.node_machine_type
   volume_size_gb               = var.volume_size_gb
   identity_id                  = azurerm_user_assigned_identity.this.id
+
+  # Managed database, generated secrets and exposure
+  extra_environment        = local.managed_environment
+  extra_secret_environment = local.managed_secure_environment
+  service_type             = var.service_type
+
+  depends_on = [
+    azurerm_postgresql_flexible_server_database.bifrost,
+    azurerm_postgresql_flexible_server_firewall_rule.azure_services,
+  ]
 }
 
 # --- ACI (Azure Container Instances) ---
@@ -253,8 +263,9 @@ module "aci" {
 
 locals {
   is_aci           = var.service == "aci"
-  manage_database  = local.is_aci && var.create_database
-  generate_secrets = local.is_aci && var.generate_secrets
+  is_aks           = var.service == "aks"
+  manage_database  = (local.is_aci || local.is_aks) && var.create_database
+  generate_secrets = (local.is_aci || local.is_aks) && var.generate_secrets
 
   database_sku        = coalesce(var.database_instance_class, "B_Standard_B1ms")
   database_storage_mb = max(var.database_storage_gb, 32) * 1024

@@ -106,21 +106,22 @@ Invalid combinations (e.g. `cloud_provider = "aws"` with `service = "gke"`) are 
 
 ### Managed database and generated secrets
 
-`aws/ecs`, `gcp/cloud-run` and `azure/aci` can provision their own PostgreSQL 16 and runtime secrets, which is what the one-click AWS, GCP and Azure buttons use:
+Every aws, gcp and azure target can provision its own PostgreSQL 16 and runtime secrets, which is what the one-click AWS, GCP and Azure paths use. The generic kubernetes target has no cloud API to do so:
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `create_database` | `false` | AWS: RDS PostgreSQL 16 in the service VPC, reachable only from the service security group. GCP: Cloud SQL PostgreSQL 16 mounted into Cloud Run over the Cloud SQL connector at `/cloudsql`. Azure: PostgreSQL Flexible Server 16 with TLS required, admitting Azure-internal addresses only. Both stores are pointed at it through `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DATABASE`, and `PG_SSL_MODE` env references unless `config_store` or `logs_store` is set explicitly. |
+| `create_database` | `false` | AWS: RDS PostgreSQL 16 in the service VPC, reachable from the ECS security group or (EKS) the VPC range. GCP: Cloud SQL PostgreSQL 16, mounted into Cloud Run over the connector at `/cloudsql`, or on a private IP through service networking for GKE. Azure: PostgreSQL Flexible Server 16 with TLS required, admitting Azure-internal addresses only. Both stores are pointed at it through `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DATABASE`, and `PG_SSL_MODE` env references unless `config_store` or `logs_store` is set explicitly. |
 | `database_name`, `database_user` | `bifrost` | Database and application user; the password is generated and stored in Secrets Manager or Secret Manager. |
 | `database_instance_class` | `db.t4g.small` / `db-custom-1-3840` / `B_Standard_B1ms` | RDS instance class, Cloud SQL tier or Flexible Server SKU. |
 | `database_storage_gb` | `20` | Disk size. Azure raises values below its 32 GB minimum. |
 | `database_deletion_protection` | `false` | Protect the database from `terraform destroy` (Azure uses a `CanNotDelete` lock). Switch it back off and apply before destroying. |
 | `database_skip_final_snapshot` | `true` | AWS only. Set `false` to keep a final RDS snapshot named `<name_prefix>-db-final` on destroy; independent of deletion protection. |
-| `generate_secrets` | `false` | Generate `BIFROST_ENCRYPTION_KEY` and `BIFROST_SETUP_TOKEN`, store them in the cloud secret manager (secure environment variables on ACI), inject them into the container, and reference them from `config.json`. Explicit `encryption_key` or `setup_token` values win. |
+| `generate_secrets` | `false` | Generate `BIFROST_ENCRYPTION_KEY` and `BIFROST_SETUP_TOKEN`, store them in the cloud secret manager (secure environment variables on ACI, a Kubernetes Secret `bifrost-runtime` on EKS, GKE and AKS), inject them into the container, and reference them from `config.json`. Explicit `encryption_key` or `setup_token` values win. |
+| `service_type` | `ClusterIP` | EKS, GKE, AKS. `LoadBalancer` provisions a public cloud load balancer; its URL is the `external_url` output. |
 | `key_vault_network_default_action` | `Deny` | Azure only. `Allow` lets a Terraform runner outside the service subnet (Azure Cloud Shell) write the config secret. |
 | `setup_token` | `null` | Bootstrap token for the first admin account, written to `config.json` as `setup_token`. |
 
-Setting either flag on another target fails at plan time. The generated setup token is exposed through the `setup_token` output.
+Setting either flag on the generic kubernetes target fails at plan time. The generated setup token is exposed through the `setup_token` output.
 
 > **Preview:** these targets have maintained Terraform implementations and mocked plan tests, but are not continuously deployed to live cloud accounts. Validate the generated plan, networking, IAM, persistence, and rollback in a non-production account before adoption.
 
@@ -172,6 +173,7 @@ For `scim_config` with `provider = "okta"`, set `config.issuerUrl`, `config.clie
 | `config_json`      | Resolved configuration JSON (sensitive, for debugging) |
 | `setup_token`      | Generated first-admin token when `generate_secrets` is true (sensitive) |
 | `database_endpoint` | RDS `host:port`, Cloud SQL connection name or Flexible Server FQDN when `create_database` is true |
+| `external_url`     | Public URL of the Kubernetes `LoadBalancer` Service when `service_type` is `LoadBalancer` |
 
 ## Testing
 
@@ -203,4 +205,4 @@ Test files are in `tests/` and cover all 7 deployment targets:
 
 ## Examples
 
-See the [`examples/`](../../examples/) directory for complete deployment examples for each cloud provider and service combination. [`aws-ecs-postgres`](../../examples/aws-ecs-postgres/), [`gcp-cloud-run-postgres`](../../examples/gcp-cloud-run-postgres/) and [`azure-aci-postgres`](../../examples/azure-aci-postgres/) are the one-click stacks driven by `deploy/aws/deploy.sh`, `deploy/gcp/deploy.sh` and `deploy/azure/deploy.sh`.
+See the [`examples/`](../../examples/) directory for complete deployment examples for each cloud provider and service combination. The `*-postgres` examples are the one-click stacks driven by the scripts under `deploy/`: `aws-ecs-postgres`, `aws-eks-postgres`, `gcp-cloud-run-postgres`, `gcp-gke-postgres`, `azure-aci-postgres` and `azure-aks-postgres`.
