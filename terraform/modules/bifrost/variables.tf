@@ -358,7 +358,7 @@ variable "ingress_annotations" {
 
 # --- Managed database and generated secrets (AWS ECS and GCP Cloud Run) ---
 variable "create_database" {
-  description = "Provision a managed PostgreSQL 16 database (RDS on AWS, Cloud SQL on GCP) and point both Bifrost stores at it through PG_* environment variables. Supported for aws/ecs and gcp/cloud-run. Explicit config_store or logs_store values still win."
+  description = "Provision a managed PostgreSQL 16 database (RDS on AWS, Cloud SQL on GCP, Flexible Server on Azure) and point both Bifrost stores at it through PG_* environment variables. Supported for aws/ecs, gcp/cloud-run and azure/aci. Explicit config_store or logs_store values still win."
   type        = bool
   default     = false
 }
@@ -376,13 +376,13 @@ variable "database_user" {
 }
 
 variable "database_instance_class" {
-  description = "Managed database size. AWS: an RDS instance class (default db.t4g.small). GCP: a Cloud SQL tier (default db-custom-1-3840)."
+  description = "Managed database size. AWS: an RDS instance class (default db.t4g.small). GCP: a Cloud SQL tier (default db-custom-1-3840). Azure: a Flexible Server SKU (default B_Standard_B1ms)."
   type        = string
   default     = null
 }
 
 variable "database_storage_gb" {
-  description = "Managed database disk size in GB."
+  description = "Managed database disk size in GB. Azure raises values below its 32 GB minimum."
   type        = number
   default     = 20
 }
@@ -400,7 +400,7 @@ variable "database_skip_final_snapshot" {
 }
 
 variable "generate_secrets" {
-  description = "Generate BIFROST_ENCRYPTION_KEY and BIFROST_SETUP_TOKEN, store them in the cloud secret manager, inject them into the container, and reference them from config.json. Explicit encryption_key or setup_token values still win. Supported for aws/ecs and gcp/cloud-run."
+  description = "Generate BIFROST_ENCRYPTION_KEY and BIFROST_SETUP_TOKEN, store them in the cloud secret manager (secure environment variables on ACI), inject them into the container, and reference them from config.json. Explicit encryption_key or setup_token values still win. Supported for aws/ecs, gcp/cloud-run and azure/aci."
   type        = bool
   default     = false
 }

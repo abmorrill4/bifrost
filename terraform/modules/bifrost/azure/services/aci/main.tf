@@ -39,10 +39,13 @@ resource "azurerm_container_group" "bifrost" {
       protocol = "TCP"
     }
 
+    environment_variables = var.extra_environment
+
     # Config injected as secure env var, written to file via command override
-    secure_environment_variables = {
-      BIFROST_CONFIG = var.config_json
-    }
+    secure_environment_variables = merge(
+      { BIFROST_CONFIG = var.config_json },
+      var.extra_secure_environment,
+    )
 
     # Write config from env var to file, then start Bifrost
     commands = [

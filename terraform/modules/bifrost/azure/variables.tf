@@ -155,3 +155,56 @@ variable "resource_group_name" {
   type        = string
   default     = null
 }
+
+# --- Managed database and generated secrets (ACI only) ---
+variable "create_database" {
+  description = "Provision an Azure Database for PostgreSQL Flexible Server (PostgreSQL 16) and wire PG_* into the container group."
+  type        = bool
+  default     = false
+}
+
+variable "database_name" {
+  description = "Database name created on the Flexible Server."
+  type        = string
+  default     = "bifrost"
+}
+
+variable "database_user" {
+  description = "Administrator login created on the Flexible Server."
+  type        = string
+  default     = "bifrost"
+}
+
+variable "database_instance_class" {
+  description = "Flexible Server SKU. Defaults to B_Standard_B1ms."
+  type        = string
+  default     = null
+}
+
+variable "database_storage_gb" {
+  description = "Flexible Server storage in GB. Azure's minimum is 32; smaller values are raised to it."
+  type        = number
+  default     = 32
+}
+
+variable "database_deletion_protection" {
+  description = "Keep the Flexible Server on terraform destroy by refusing deletion."
+  type        = bool
+  default     = false
+}
+
+variable "generate_secrets" {
+  description = "Generate BIFROST_ENCRYPTION_KEY and BIFROST_SETUP_TOKEN and inject them into the container group as secure environment variables."
+  type        = bool
+  default     = false
+}
+
+variable "key_vault_network_default_action" {
+  description = "Key Vault network ACL default. Deny limits data-plane access to the service subnet and trusted Azure services; Allow lets the Terraform runner (for example Azure Cloud Shell) write the config secret from any network, authenticated by access policy."
+  type        = string
+  default     = "Deny"
+  validation {
+    condition     = contains(["Allow", "Deny"], var.key_vault_network_default_action)
+    error_message = "key_vault_network_default_action must be Allow or Deny"
+  }
+}

@@ -71,3 +71,16 @@ variable "identity_id" {
   description = "User assigned identity ID for the container group."
   type        = string
 }
+
+# --- Extra runtime environment ---
+variable "extra_environment" {
+  description = "Additional plain environment variables for the Bifrost container."
+  type        = map(string)
+  default     = {}
+}
+
+variable "extra_secure_environment" {
+  description = "Additional secure environment variables for the Bifrost container (encrypted at rest, not shown in the portal)."
+  type        = map(string)
+  default     = {}
+}
