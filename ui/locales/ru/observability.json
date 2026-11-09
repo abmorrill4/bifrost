@@ -70,7 +70,9 @@
 			"decision": "Модель принятия решений",
 			"llm": "LLM",
 			"skipped": "Пропущено"
-		}
+		},
+		"modelRouter": "Маршрутизатор моделей",
+		"modelRoutingRule": "Правило маршрутизации моделей"
 	},
 	"dashboard": {
 		"tabs": {
@@ -1265,7 +1267,10 @@
 		"exactAgentCorrelationID": "Точный ID корреляции агента",
 		"nothingRecorded": "За этот период ничего не записано",
 		"topics": "Темы",
-		"searchTopics": "Поиск тем"
+		"searchTopics": "Поиск тем",
+		"modelRouters": "Маршрутизаторы моделей",
+		"searchModelRouters": "Поиск маршрутизаторов",
+		"modelRoutingRules": "Правила маршрутизации моделей"
 	},
 	"requestTypes": {
 		"chat_completion": "Чат",

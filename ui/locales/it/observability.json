@@ -70,7 +70,9 @@
 			"decision": "Modello decisionale",
 			"llm": "LLM",
 			"skipped": "Saltato"
-		}
+		},
+		"modelRouter": "Router dei modelli",
+		"modelRoutingRule": "Regola di routing dei modelli"
 	},
 	"dashboard": {
 		"tabs": {
@@ -1215,7 +1217,10 @@
 		"exactAgentCorrelationID": "ID di correlazione agent esatto",
 		"nothingRecorded": "Nulla registrato in questo intervallo di tempo",
 		"topics": "Argomenti",
-		"searchTopics": "Cerca argomenti"
+		"searchTopics": "Cerca argomenti",
+		"modelRouters": "Router dei modelli",
+		"searchModelRouters": "Cerca router",
+		"modelRoutingRules": "Regole di routing dei modelli"
 	},
 	"requestTypes": {
 		"chat_completion": "Chat",

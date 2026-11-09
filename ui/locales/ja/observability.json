@@ -70,7 +70,9 @@
 			"decision": "判断モデル",
 			"llm": "LLM",
 			"skipped": "スキップ"
-		}
+		},
+		"modelRouter": "モデルルーター",
+		"modelRoutingRule": "モデルルーティングルール"
 	},
 	"dashboard": {
 		"tabs": {
@@ -1209,7 +1211,10 @@
 		"exactAgentCorrelationID": "エージェント相関 ID（完全一致）",
 		"nothingRecorded": "この期間に記録はありません",
 		"topics": "トピック",
-		"searchTopics": "トピックを検索"
+		"searchTopics": "トピックを検索",
+		"modelRouters": "モデルルーター",
+		"searchModelRouters": "ルーターを検索",
+		"modelRoutingRules": "モデルルーティングルール"
 	},
 	"requestTypes": {
 		"chat_completion": "チャット",

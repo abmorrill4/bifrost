@@ -70,7 +70,9 @@
 			"decision": "Modelo de decisión",
 			"llm": "LLM",
 			"skipped": "Omitido"
-		}
+		},
+		"modelRouter": "Enrutador de modelos",
+		"modelRoutingRule": "Regla de enrutamiento de modelos"
 	},
 	"dashboard": {
 		"tabs": {
@@ -1215,7 +1217,10 @@
 		"exactAgentCorrelationID": "ID de correlación del agente exacto",
 		"nothingRecorded": "No hay nada registrado en este intervalo de tiempo",
 		"topics": "Temas",
-		"searchTopics": "Buscar temas"
+		"searchTopics": "Buscar temas",
+		"modelRouters": "Enrutadores de modelos",
+		"searchModelRouters": "Buscar enrutadores",
+		"modelRoutingRules": "Reglas de enrutamiento de modelos"
 	},
 	"requestTypes": {
 		"chat_completion": "Conversación",
