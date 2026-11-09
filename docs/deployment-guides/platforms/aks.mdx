@@ -2,7 +2,7 @@
 title: "Azure Kubernetes Service"
 sidebarTitle: "Azure Kubernetes Service"
 description: "Deploy Bifrost to an existing Azure Kubernetes Service cluster"
-icon: "microsoft"
+icon: "/media/azure-icon.svg"
 ---
 
 import { AzureMark } from "/snippets/deploy-marks.jsx";
@@ -37,6 +37,18 @@ The database accepts connections only from Azure-internal addresses, which is ho
 **Before you open the dashboard:** Container Instances serve plain HTTP, so the setup token, the admin password and every provider key you paste travel unencrypted. Either narrow `allowed_cidr` in `terraform.tfvars` to your own address and apply again, or put Azure Front Door, Application Gateway, or your own proxy with TLS in front first. Do both before inviting other users, or move to the AKS deployment below once you need ingress, scaling, or Enterprise clustering.
 
 Then open the URL, [create the first admin account](/quickstart/gateway/setting-up-auth) with the token, add a provider key, and [create a virtual key](/features/governance/virtual-keys); inference routes require one because the endpoint is public.
+
+### Create an AKS cluster instead
+
+For a Kubernetes deployment without an existing cluster, run the AKS script in the same Cloud Shell:
+
+```bash
+git clone --depth 1 https://github.com/maximhq/bifrost && bifrost/deploy/aks/deploy.sh
+```
+
+It applies [`terraform/examples/azure-aks-postgres`](https://github.com/maximhq/bifrost/tree/main/terraform/examples/azure-aks-postgres) in two phases: the AKS cluster first (about ten minutes), then, after `az aks get-credentials` has written the kubeconfig, the same Flexible Server, Kubernetes Secrets `bifrost-config` and `bifrost-runtime`, and one Bifrost pod behind a public `LoadBalancer` Service whose URL the script prints. The environment overrides, setup-token flow, and enterprise image swap are the same as above; use `BIFROST_IMAGE_REPOSITORY` together with the image pull secret from the [enterprise Azure guide](/deployment-guides/enterprise/azure).
+
+**Before you open the dashboard:** the `LoadBalancer` Service is plain HTTP, so the setup token, the admin password and every provider key you paste travel unencrypted. Either narrow `allowed_cidr` in `terraform.tfvars` to your own address and apply again, or put Application Gateway ingress or an ingress controller with TLS in front first. Do both before inviting other users; then create the first admin account with the printed setup token, add a provider key, and create a virtual key.
 
 Terraform state stays in the example directory inside Cloud Shell's persistent home. Keep that clone to change or destroy the stack, or move the state to an Azure Storage backend.
 

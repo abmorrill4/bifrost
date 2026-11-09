@@ -5,11 +5,42 @@ description: "Deploy Bifrost to an existing Amazon EKS cluster"
 icon: "aws"
 ---
 
+import { AwsMark } from "/snippets/deploy-marks.jsx";
+
 This guide deploys Bifrost to an existing EKS cluster using the Helm chart. It covers the Bifrost image, secrets, storage, database connection, service exposure, verification, and scaling.
 
 <Note>
 The Helm configuration is validated in the repository. The complete guide is not continuously exercised in a live AWS account, so test the selected values in a non-production cluster before rollout.
 </Note>
+
+## One-click deploy
+
+<a className="deploy-btn" href="https://console.aws.amazon.com/cloudshell/home" target="_blank" rel="noopener noreferrer"><AwsMark />Deploy on AWS</a>
+
+If you do not have a cluster yet, the one-click path creates one. The button opens AWS CloudShell, already signed in as you. Paste one line into it:
+
+```bash
+git clone --depth 1 https://github.com/maximhq/bifrost && bifrost/deploy/eks/deploy.sh
+```
+
+The script applies [`terraform/examples/aws-eks-postgres`](https://github.com/maximhq/bifrost/tree/main/terraform/examples/aws-eks-postgres) in two phases: the cluster first, then, after `aws eks update-kubeconfig` has written the kubeconfig, the database, secrets, and Bifrost itself.
+
+| Resource | What it is |
+|---|---|
+| Cluster and node pool | Created for you (about 15 minutes) |
+| RDS PostgreSQL 16 (`db.t4g.small`, 20 GB encrypted gp3, 7-day backups) | Configuration store and log store, reachable only from inside the deployment's network |
+| Kubernetes Secrets `bifrost-config` and `bifrost-runtime` | `config.json`; database password, `BIFROST_ENCRYPTION_KEY`, `BIFROST_SETUP_TOKEN` |
+| `LoadBalancer` Service | Public Network Load Balancer; the script prints its URL |
+
+**Before you open the dashboard:** the Service is plain HTTP, so the setup token, the admin password and every provider key you paste travel unencrypted. Either narrow `allowed_cidr` in `terraform.tfvars` to your own address and apply again, or put an ACM certificate on an NLB or ALB, or an ingress controller with TLS, in front first. Do both before inviting other users.
+
+Then open the URL, [create the first admin account](/quickstart/gateway/setting-up-auth) with the printed setup token, add a provider key, and [create a virtual key](/features/governance/virtual-keys); inference routes require one because the Service is public.
+
+Terraform state stays in the example directory inside the shell's persistent home. Keep that clone to change or destroy the stack, or move the state to a remote backend. Environment overrides for the script: `AWS_REGION`, `BIFROST_NAME_PREFIX`, `BIFROST_IMAGE_TAG` (pin a release), `BIFROST_IMAGE_REPOSITORY`, and `BIFROST_AUTO_APPROVE=1`. Tear down with `terraform destroy` in the example directory.
+
+**Enterprise:** set `BIFROST_IMAGE_REPOSITORY` to the registry path issued for your organization before running the script and add the image pull secret the [enterprise guide](/deployment-guides/enterprise/aws) describes.
+
+The rest of this page deploys Bifrost into a cluster you already run.
 
 ## Bifrost on EKS
 
