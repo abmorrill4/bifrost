@@ -5,11 +5,44 @@ description: "Deploy Bifrost to an existing Azure Kubernetes Service cluster"
 icon: "microsoft"
 ---
 
+import { AzureMark } from "/snippets/deploy-marks.jsx";
+
 This guide deploys Bifrost to an existing AKS cluster using the Helm chart. It covers the Bifrost image, secrets, storage, database connection, service exposure, verification, and scaling.
 
 <Note>
 The Helm configuration is validated in the repository. The complete guide is not continuously exercised in a live Azure subscription, so test the selected values in a non-production cluster before rollout.
 </Note>
+
+## One-click deploy
+
+<a className="deploy-btn" href="https://shell.azure.com" target="_blank" rel="noopener noreferrer"><AzureMark />Deploy on Azure</a>
+
+If you do not have an AKS cluster, the one-click path runs Bifrost on Azure Container Instances instead. The button opens Azure Cloud Shell, already signed in as you. Paste one line into it:
+
+```bash
+git clone --depth 1 https://github.com/maximhq/bifrost && bifrost/deploy/azure/deploy.sh
+```
+
+The script uses your current subscription, registers the Container Instances, PostgreSQL, Key Vault, Managed Identity, and Network resource providers, and applies [`terraform/examples/azure-aci-postgres`](https://github.com/maximhq/bifrost/tree/main/terraform/examples/azure-aci-postgres) with the Terraform that Cloud Shell ships:
+
+| Resource | What it is |
+|---|---|
+| Resource group, VNet, subnet, network security group | Network scaffold; the NSG admits the container port from `allowed_cidr` |
+| Key Vault and user-assigned identity | Holds `config.json`; identity for the container group |
+| Azure Database for PostgreSQL Flexible Server 16 (`B_Standard_B1ms`, 32 GB, 7-day backups, TLS required) | Configuration store and log store |
+| Container group, 1 core and 2 GB, public IP with a DNS label | The Bifrost image on `http://<prefix>.<region>.azurecontainer.io:8080` |
+
+The database accepts connections only from Azure-internal addresses, which is how the container group reaches it. The generated `BIFROST_ENCRYPTION_KEY` and `BIFROST_SETUP_TOKEN` travel as secure environment variables; the script prints the token. Apply takes about ten minutes, most of it the Flexible Server.
+
+**Before you open the dashboard:** Container Instances serve plain HTTP, so the setup token, the admin password and every provider key you paste travel unencrypted. Either narrow `allowed_cidr` in `terraform.tfvars` to your own address and apply again, or put Azure Front Door, Application Gateway, or your own proxy with TLS in front first. Do both before inviting other users, or move to the AKS deployment below once you need ingress, scaling, or Enterprise clustering.
+
+Then open the URL, [create the first admin account](/quickstart/gateway/setting-up-auth) with the token, add a provider key, and [create a virtual key](/features/governance/virtual-keys); inference routes require one because the endpoint is public.
+
+Terraform state stays in the example directory inside Cloud Shell's persistent home. Keep that clone to change or destroy the stack, or move the state to an Azure Storage backend.
+
+Environment overrides for the script: `AZURE_LOCATION`, `AZURE_SUBSCRIPTION_ID`, `BIFROST_NAME_PREFIX` (also the DNS label), `BIFROST_IMAGE_TAG` (pin a release), `BIFROST_IMAGE_REPOSITORY`, and `BIFROST_AUTO_APPROVE=1`. Tear down with `terraform destroy` in the example directory.
+
+**Enterprise:** set `BIFROST_IMAGE_REPOSITORY` to the registry path issued for your organization before running the script and add the registry credentials the [enterprise Azure guide](/deployment-guides/enterprise/azure) describes.
 
 ## Bifrost on AKS
 
