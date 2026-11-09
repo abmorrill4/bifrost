@@ -2177,7 +2177,7 @@ func TestMergeGovernanceConfig_ForceFileSyncPreservesBudgetRuntimeState(t *testi
 		inMemory.LastReset.UTC(), lastReset)
 }
 
-func TestMergeGovernanceConfig_SyncsComplexityAnalyzerConfig(t *testing.T) {
+func TestLoadModelRoutersConfig_SyncsComplexityAnalyzerConfig(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2203,7 +2203,7 @@ func TestMergeGovernanceConfig_SyncsComplexityAnalyzerConfig(t *testing.T) {
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2216,7 +2216,7 @@ func TestMergeGovernanceConfig_SyncsComplexityAnalyzerConfig(t *testing.T) {
 	require.Equal(t, stored, config.GovernanceConfig.ComplexityAnalyzerConfig)
 }
 
-func TestMergeGovernanceConfig_AppliesComplexityAnalyzerConfigWhenHashesAreEmpty(t *testing.T) {
+func TestLoadModelRoutersConfig_AppliesComplexityAnalyzerConfigWhenHashesAreEmpty(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2239,7 +2239,7 @@ func TestMergeGovernanceConfig_AppliesComplexityAnalyzerConfigWhenHashesAreEmpty
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2267,7 +2267,7 @@ func expectedMergedComplexityKeywords(base, overlay []string) []string {
 	return out
 }
 
-func TestMergeGovernanceConfig_PreservesComplexityAnalyzerConfigWhenSectionHashesMatch(t *testing.T) {
+func TestLoadModelRoutersConfig_PreservesComplexityAnalyzerConfigWhenSectionHashesMatch(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2291,7 +2291,7 @@ func TestMergeGovernanceConfig_PreservesComplexityAnalyzerConfigWhenSectionHashe
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2301,7 +2301,7 @@ func TestMergeGovernanceConfig_PreservesComplexityAnalyzerConfigWhenSectionHashe
 	require.Equal(t, fileHashes, stored.ConfigHashes)
 }
 
-func TestMergeGovernanceConfig_MergesComplexityKeywordsWhenSectionHashesChange(t *testing.T) {
+func TestLoadModelRoutersConfig_MergesComplexityKeywordsWhenSectionHashesChange(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2330,7 +2330,7 @@ func TestMergeGovernanceConfig_MergesComplexityKeywordsWhenSectionHashesChange(t
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2342,7 +2342,7 @@ func TestMergeGovernanceConfig_MergesComplexityKeywordsWhenSectionHashesChange(t
 	require.Equal(t, fileHashes, stored.ConfigHashes)
 }
 
-func TestMergeGovernanceConfig_OnlyChangedComplexitySectionsApply(t *testing.T) {
+func TestLoadModelRoutersConfig_OnlyChangedComplexitySectionsApply(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2373,7 +2373,7 @@ func TestMergeGovernanceConfig_OnlyChangedComplexitySectionsApply(t *testing.T) 
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2393,7 +2393,7 @@ func TestMergeGovernanceConfig_OnlyChangedComplexitySectionsApply(t *testing.T) 
 // in the file must not reset the classifier the dashboard chose. The hashes and the merge decide
 // presence from the file as written; normalising it first would invent a default classifier and
 // then "apply" it.
-func TestMergeGovernanceConfig_FileWithoutClassifierKeepsDashboardClassifier(t *testing.T) {
+func TestLoadModelRoutersConfig_FileWithoutClassifierKeepsDashboardClassifier(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2419,7 +2419,7 @@ func TestMergeGovernanceConfig_FileWithoutClassifierKeepsDashboardClassifier(t *
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2428,7 +2428,7 @@ func TestMergeGovernanceConfig_FileWithoutClassifierKeepsDashboardClassifier(t *
 	require.Empty(t, stored.ConfigHashes.ClassifierSettings)
 }
 
-func TestMergeGovernanceConfig_SourceOfTruthConfigJSONUsesComplexityFileConfig(t *testing.T) {
+func TestLoadModelRoutersConfig_SourceOfTruthConfigJSONUsesComplexityFileConfig(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2456,7 +2456,7 @@ func TestMergeGovernanceConfig_SourceOfTruthConfigJSONUsesComplexityFileConfig(t
 		},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	stored, err := store.GetComplexityAnalyzerConfig(context.Background())
 	require.NoError(t, err)
@@ -2469,7 +2469,7 @@ func TestMergeGovernanceConfig_SourceOfTruthConfigJSONUsesComplexityFileConfig(t
 // Split-mode startup compares the classifier as written in the file with the last file
 // hash. An omitted classifier is "no opinion" and never overrides the dashboard; only an
 // explicit file classifier whose hash changed is applied.
-func TestMergeGovernanceConfig_ReconcilesComplexityClassifier(t *testing.T) {
+func TestLoadModelRoutersConfig_ReconcilesComplexityClassifier(t *testing.T) {
 	initTestLogger()
 
 	for _, tc := range []struct {
@@ -2534,7 +2534,7 @@ func TestMergeGovernanceConfig_ReconcilesComplexityClassifier(t *testing.T) {
 				configData.Governance.ComplexityAnalyzerConfig = nil
 			}
 
-			mergeGovernanceConfig(ctx, config, configData, dbGovernance)
+			loadModelRoutersConfig(ctx, config, configData)
 
 			stored, err := store.GetComplexityAnalyzerConfig(ctx)
 			require.NoError(t, err)
@@ -2557,7 +2557,7 @@ func TestMergeGovernanceConfig_ReconcilesComplexityClassifier(t *testing.T) {
 	}
 }
 
-func TestMergeGovernanceConfig_SourceOfTruthConfigJSONMissingComplexityLeavesDBConfig(t *testing.T) {
+func TestLoadModelRoutersConfig_SourceOfTruthConfigJSONMissingComplexityLeavesDBConfig(t *testing.T) {
 	initTestLogger()
 
 	store := NewMockConfigStore()
@@ -2580,7 +2580,7 @@ func TestMergeGovernanceConfig_SourceOfTruthConfigJSONMissingComplexityLeavesDBC
 		Governance:    &configstore.GovernanceConfig{},
 	}
 
-	mergeGovernanceConfig(context.Background(), config, configData, dbGovernance)
+	loadModelRoutersConfig(context.Background(), config, configData)
 
 	require.Same(t, dbConfig, config.GovernanceConfig.ComplexityAnalyzerConfig)
 	entry, err := store.GetConfig(context.Background(), tables.ConfigComplexityAnalyzerConfigKey)
@@ -16902,7 +16902,6 @@ func TestUpdateGovernanceConfigInStore_RejectsSharedGovernanceIDs(t *testing.T) 
 			nil, nil, // pricing overrides
 			modelAdds, modelUpdates,
 			providerAdds, providerUpdates,
-			nil,
 			false,
 			nil,
 			nil,
